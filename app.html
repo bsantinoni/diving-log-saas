@@ -1,79 +1,1368 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Diving Log — App</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, sans-serif;
-      background: #0a1628;
-      color: #fff;
-      min-height: 100vh;
-      padding: 24px;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diving Log — Operations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --abyss:     #070b12;
+    --deep:      #0d1520;
+    --mid:       #111c2d;
+    --surface:   #162236;
+    --rim:       #1e2f47;
+    --wire:      #243650;
+    --muted:     #3d567a;
+    --sub:       #5a7da0;
+    --text:      #c8ddf0;
+    --bright:    #e8f4ff;
+    --cyan:      #00d4ff;
+    --cyan-dim:  #0099bb;
+    --cyan-glow: rgba(0,212,255,0.15);
+    --amber:     #f59e0b;
+    --red:       #ef4444;
+    --green:     #10b981;
+    --radius:    8px;
+    --radius-lg: 14px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--abyss);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,100,160,0.18) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 30% at 80% 80%, rgba(0,60,100,0.10) 0%, transparent 60%);
+  }
+
+  /* ── HEADER ───────────────────────────── */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(7,11,18,0.85);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--wire);
+    padding: 0 32px;
+    height: 58px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 15px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--bright);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-icon {
+    width: 28px; height: 28px;
+    border: 1.5px solid var(--cyan);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--cyan); font-size: 13px;
+    box-shadow: 0 0 10px var(--cyan-glow);
+  }
+  .header-right { display: flex; align-items: center; gap: 20px; }
+  #user-email {
+    color: var(--sub); font-size: 11px;
+    letter-spacing: 0.05em;
+  }
+  .btn-signout {
+    background: transparent;
+    border: 1px solid var(--wire);
+    color: var(--sub);
+    padding: 5px 14px;
+    border-radius: var(--radius);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    transition: all 0.2s;
+  }
+  .btn-signout:hover { border-color: var(--red); color: var(--red); }
+
+  /* ── LAYOUT ───────────────────────────── */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--cyan); margin-bottom: 32px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .page-title::after {
+    content: ''; flex: 1; height: 1px;
+    background: linear-gradient(to right, var(--wire), transparent);
+  }
+
+  /* ── FORM CARD ────────────────────────── */
+  .form-card {
+    background: var(--deep);
+    border: 1px solid var(--wire);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    margin-bottom: 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .form-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    opacity: 0.6;
+  }
+
+  .form-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 28px;
+  }
+  .form-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px; font-weight: 700;
+    color: var(--bright);
+  }
+  .btn-repeat {
+    background: var(--surface);
+    border: 1px solid var(--wire);
+    color: var(--text);
+    padding: 7px 16px;
+    border-radius: var(--radius);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: 0.06em;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    transition: all 0.2s;
+  }
+  .btn-repeat:hover { border-color: var(--amber); color: var(--amber); }
+  .btn-repeat svg { width: 13px; height: 13px; }
+
+  /* ── GRID FIELDS ──────────────────────── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px 24px;
+  }
+  .field-span2 { grid-column: span 2; }
+  .field-span3 { grid-column: span 3; }
+
+  .field { display: flex; flex-direction: column; gap: 7px; }
+
+  label {
+    font-size: 10px; font-weight: 500;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--sub);
+  }
+
+  input[type="text"],
+  input[type="date"],
+  input[type="number"],
+  select,
+  textarea {
+    background: var(--mid);
+    border: 1px solid var(--wire);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 9px 13px;
+    width: 100%;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.5);
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--cyan-dim);
+    box-shadow: 0 0 0 3px rgba(0,212,255,0.08);
+  }
+  textarea { resize: vertical; min-height: 80px; }
+
+  select option { background: var(--mid); }
+
+  /* ── CUSTOM DROPDOWN (combobox) ───────── */
+  .combo-wrap {
+    position: relative;
+  }
+  .combo-input-row {
+    display: flex; gap: 0;
+  }
+  .combo-input {
+    flex: 1;
+    border-radius: var(--radius) 0 0 var(--radius) !important;
+  }
+  .combo-arrow {
+    background: var(--mid);
+    border: 1px solid var(--wire); border-left: none;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    color: var(--sub); cursor: pointer;
+    padding: 0 11px;
+    display: flex; align-items: center;
+    transition: color 0.2s;
+  }
+  .combo-arrow:hover { color: var(--cyan); }
+  .combo-arrow svg { width: 12px; height: 12px; pointer-events: none; }
+
+  .combo-dropdown {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: var(--mid);
+    border: 1px solid var(--wire);
+    border-radius: var(--radius);
+    z-index: 200;
+    max-height: 200px; overflow-y: auto;
+    display: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .combo-dropdown.open { display: block; }
+  .combo-option {
+    padding: 9px 13px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text);
+    transition: background 0.15s;
+  }
+  .combo-option:hover { background: var(--surface); }
+  .combo-option.add-new {
+    color: var(--cyan);
+    border-top: 1px solid var(--wire);
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px;
+  }
+  .combo-option.add-new::before { content: '+'; font-size: 16px; }
+
+  /* ── FORM FOOTER ──────────────────────── */
+  .form-footer {
+    margin-top: 28px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  #form-msg {
+    font-size: 12px;
+    color: var(--green);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  #form-msg.error { color: var(--red); }
+  #form-msg.visible { opacity: 1; }
+
+  .btn-submit {
+    background: var(--cyan);
+    color: var(--abyss);
+    border: none;
+    padding: 11px 32px;
+    border-radius: var(--radius);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 0 20px rgba(0,212,255,0.2);
+  }
+  .btn-submit:hover {
+    background: #33ddff;
+    box-shadow: 0 0 30px rgba(0,212,255,0.35);
+    transform: translateY(-1px);
+  }
+  .btn-submit:disabled {
+    opacity: 0.5; cursor: not-allowed; transform: none;
+  }
+
+  /* ── LOG SECTION ──────────────────────── */
+  .log-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .log-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--cyan);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .log-title::after {
+    content: ''; width: 60px; height: 1px;
+    background: linear-gradient(to right, var(--wire), transparent);
+  }
+  .dive-count {
+    font-size: 11px; color: var(--muted);
+  }
+
+  /* ── ACCORDION ────────────────────────── */
+  .month-group { margin-bottom: 12px; }
+
+  .month-header {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--deep);
+    border: 1px solid var(--wire);
+    border-radius: var(--radius);
+    padding: 13px 20px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    user-select: none;
+  }
+  .month-header:hover { border-color: var(--cyan-dim); background: var(--mid); }
+  .month-header.open {
+    border-color: var(--cyan-dim);
+    border-radius: var(--radius) var(--radius) 0 0;
+    background: var(--mid);
+  }
+
+  .month-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 600;
+    color: var(--bright);
+  }
+  .month-meta {
+    font-size: 11px; color: var(--muted);
+    display: flex; align-items: center; gap: 16px;
+  }
+  .month-chevron {
+    color: var(--sub); transition: transform 0.25s;
+    width: 16px; height: 16px;
+  }
+  .month-header.open .month-chevron { transform: rotate(180deg); }
+
+  .month-body {
+    display: none;
+    border: 1px solid var(--cyan-dim);
+    border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    overflow: hidden;
+  }
+  .month-body.open { display: block; }
+
+  /* ── DIVE ROW ─────────────────────────── */
+  .dive-row {
+    display: grid;
+    grid-template-columns: 90px 140px 1fr 1fr 1fr 80px;
+    align-items: center;
+    gap: 16px;
+    padding: 13px 20px;
+    border-bottom: 1px solid var(--rim);
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+  .dive-row:last-child { border-bottom: none; }
+  .dive-row:hover { background: var(--surface); }
+  .dive-row.header-row {
+    background: var(--surface);
+    cursor: default;
+    padding: 9px 20px;
+    border-bottom: 1px solid var(--wire);
+  }
+  .dive-row.header-row:hover { background: var(--surface); }
+
+  .col-label {
+    font-size: 9px; font-weight: 500;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .dive-date { font-size: 12px; color: var(--sub); }
+  .dive-type {
+    font-size: 10px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 4px;
+    display: inline-block;
+  }
+  .type-bell { background: rgba(0,212,255,0.12); color: var(--cyan); }
+  .type-surface { background: rgba(16,185,129,0.12); color: var(--green); }
+  .dive-depth { font-size: 13px; color: var(--bright); font-weight: 500; }
+  .dive-depth span { font-size: 10px; color: var(--muted); margin-left: 2px; }
+  .dive-job { font-size: 12px; color: var(--text); }
+  .dive-location { font-size: 12px; color: var(--sub); }
+  .dive-actions {
+    display: flex; gap: 6px; justify-content: flex-end;
+  }
+  .btn-icon {
+    background: none; border: none;
+    color: var(--muted); cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color 0.2s;
+    display: flex; align-items: center;
+  }
+  .btn-icon:hover.edit { color: var(--cyan); }
+  .btn-icon:hover.del  { color: var(--red); }
+  .btn-icon svg { width: 14px; height: 14px; }
+
+  /* ── EMPTY STATE ──────────────────────── */
+  .empty-state {
+    text-align: center; padding: 60px 24px;
+    color: var(--muted);
+  }
+  .empty-state svg {
+    width: 48px; height: 48px;
+    margin-bottom: 16px; opacity: 0.3;
+  }
+  .empty-state p { font-size: 13px; }
+
+  /* ── MODAL (edit) ─────────────────────── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(7,11,18,0.85); z-index: 1000;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--deep);
+    border: 1px solid var(--wire);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    width: min(700px, 95vw);
+    max-height: 90vh; overflow-y: auto;
+    position: relative;
+  }
+  .modal-close {
+    position: absolute; top: 16px; right: 16px;
+    background: none; border: none;
+    color: var(--sub); cursor: pointer; font-size: 20px;
+    line-height: 1; padding: 4px 8px;
+    border-radius: 4px; transition: color 0.2s;
+  }
+  .modal-close:hover { color: var(--red); }
+
+  /* ── TOAST ────────────────────────────── */
+  .toast {
+    position: fixed; bottom: 28px; right: 28px;
+    background: var(--mid);
+    border: 1px solid var(--wire);
+    border-radius: var(--radius);
+    padding: 12px 20px;
+    font-size: 12px; color: var(--text);
+    z-index: 2000;
+    opacity: 0; transform: translateY(10px);
+    transition: all 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.success { border-color: var(--green); color: var(--green); }
+  .toast.error   { border-color: var(--red);   color: var(--red); }
+
+  /* ── LOADING ──────────────────────────── */
+  .spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid var(--wire);
+    border-top-color: var(--cyan);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle; margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── RESPONSIVE ───────────────────────── */
+  @media (max-width: 768px) {
+    .form-grid { grid-template-columns: 1fr 1fr; }
+    .field-span2 { grid-column: span 2; }
+    .field-span3 { grid-column: span 2; }
+    .dive-row {
+      grid-template-columns: 80px 100px 1fr 60px;
     }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 32px;
-    }
-    h1 { color: #64ffda; font-size: 22px; }
-    .user { color: #8892b0; font-size: 13px; }
-    button.logout {
-      background: transparent;
-      border: 1px solid #ff6b6b;
-      color: #ff6b6b;
-      padding: 6px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-    }
-    .welcome {
-      background: #112240;
-      border-radius: 12px;
-      padding: 32px;
-      text-align: center;
-    }
-    .welcome h2 { color: #64ffda; margin-bottom: 12px; }
-    .welcome p { color: #8892b0; font-size: 15px; }
-  </style>
+    .dive-row .dive-job,
+    .dive-row .dive-location { display: none; }
+    header { padding: 0 16px; }
+    main { padding: 24px 16px 60px; }
+    .form-card { padding: 20px; }
+  }
+  @media (max-width: 480px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .field-span2, .field-span3 { grid-column: span 1; }
+  }
+
+  /* ── UNIT TOGGLE ──────────────────────── */
+  .unit-toggle {
+    display: flex; align-items: center;
+    background: var(--mid);
+    border: 1px solid var(--wire);
+    border-radius: 20px;
+    padding: 3px;
+    gap: 2px;
+    position: relative;
+  }
+  .unit-btn {
+    background: none; border: none;
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative; z-index: 1;
+    white-space: nowrap;
+  }
+  .unit-btn.active {
+    background: var(--cyan);
+    color: var(--abyss);
+    box-shadow: 0 0 10px rgba(0,212,255,0.3);
+  }
+  .unit-badge {
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 4px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 400;
+  }
+  .unit-badge.metric  { background: rgba(0,212,255,0.12); color: var(--cyan); }
+  .unit-badge.imperial{ background: rgba(245,158,11,0.12); color: var(--amber); }
+
+  /* depth field with live conversion hint */
+  .depth-hint {
+    font-size: 10px; color: var(--muted);
+    margin-top: 4px; min-height: 14px;
+    font-style: italic;
+    transition: color 0.2s;
+  }
+  .depth-hint.active { color: var(--sub); }
+
+  /* both values in log */
+  .dive-depth-both {
+    display: flex; flex-direction: column; gap: 1px;
+  }
+  .dive-depth-primary {
+    font-size: 13px; color: var(--bright); font-weight: 500;
+  }
+  .dive-depth-secondary {
+    font-size: 10px; color: var(--muted);
+  }
+</style>
 </head>
 <body>
 
+<!-- HEADER -->
 <header>
-  <h1>🤿 Diving Log</h1>
-  <div style="display:flex;align-items:center;gap:16px">
-    <span class="user" id="userEmail"></span>
-    <button class="logout" onclick="logout()">Sign Out</button>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+        <path d="M12 8v8M8 12h8"/>
+      </svg>
+    </div>
+    Diving Log
+  </div>
+  <div class="header-right">
+    <span id="user-email">—</span>
+    <div class="unit-toggle" id="unit-toggle" title="Switch depth unit">
+      <button class="unit-btn active" id="btn-metric"  data-unit="metric">m</button>
+      <button class="unit-btn"        id="btn-imperial" data-unit="imperial">ft</button>
+    </div>
+    <button class="btn-signout" id="btn-signout">Sign Out</button>
   </div>
 </header>
 
-<div class="welcome">
-  <h2>Welcome aboard! ✅</h2>
-  <p>Login successful. The full app is coming next.</p>
+<!-- MAIN -->
+<main>
+  <div class="page-title">New Dive Record</div>
+
+  <!-- FORM CARD -->
+  <div class="form-card">
+    <div class="form-header">
+      <span class="form-title">Log Entry</span>
+      <button class="btn-repeat" id="btn-repeat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
+        </svg>
+        Repeat Last Dive
+      </button>
+    </div>
+
+    <div class="form-grid" id="dive-form">
+
+      <!-- Date -->
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="f-date" required>
+      </div>
+
+      <!-- Dive Type -->
+      <div class="field">
+        <label>Dive Type</label>
+        <select id="f-type">
+          <option value="">— select —</option>
+          <option value="Bell/Sat">Bell / Sat</option>
+          <option value="Surface Supply">Surface Supply</option>
+        </select>
+      </div>
+
+      <!-- Depth -->
+      <div class="field">
+        <label id="f-depth-label">Depth (m)</label>
+        <input type="number" id="f-depth" placeholder="0" min="0" max="3000">
+        <div class="depth-hint" id="f-depth-hint"></div>
+      </div>
+
+      <!-- Divers -->
+      <div class="field field-span2">
+        <label>Divers</label>
+        <div class="combo-wrap" id="combo-divers"><!-- rendered by JS --></div>
+      </div>
+
+      <!-- Storage/Table Deco -->
+      <div class="field">
+        <label>Storage / Table Deco</label>
+        <input type="text" id="f-deco" placeholder="e.g. Comex 30">
+      </div>
+
+      <!-- Excursion/TDT -->
+      <div class="field">
+        <label>Excursion / TDT</label>
+        <input type="text" id="f-tdt" placeholder="e.g. 45 min">
+      </div>
+
+      <!-- Job -->
+      <div class="field">
+        <label>Job</label>
+        <div class="combo-wrap" id="combo-job"><!-- rendered by JS --></div>
+      </div>
+
+      <!-- Client -->
+      <div class="field">
+        <label>Client</label>
+        <div class="combo-wrap" id="combo-client"><!-- rendered by JS --></div>
+      </div>
+
+      <!-- Vessel -->
+      <div class="field">
+        <label>Vessel</label>
+        <div class="combo-wrap" id="combo-vessel"><!-- rendered by JS --></div>
+      </div>
+
+      <!-- Location -->
+      <div class="field">
+        <label>Location</label>
+        <input type="text" id="f-location" placeholder="e.g. North Sea, Block 15">
+      </div>
+
+      <!-- Country -->
+      <div class="field">
+        <label>Country</label>
+        <div class="combo-wrap" id="combo-country"><!-- rendered by JS --></div>
+      </div>
+
+      <!-- Notes -->
+      <div class="field field-span3">
+        <label>Notes</label>
+        <textarea id="f-notes" placeholder="Observations, conditions, incidents…"></textarea>
+      </div>
+
+    </div><!-- /form-grid -->
+
+    <div class="form-footer">
+      <span id="form-msg"></span>
+      <button class="btn-submit" id="btn-save">
+        <span id="btn-save-label">Save Dive</span>
+      </button>
+    </div>
+  </div><!-- /form-card -->
+
+  <!-- LOG LIST -->
+  <div class="log-header">
+    <div class="log-title">Dive Log</div>
+    <span class="dive-count" id="dive-count"></span>
+  </div>
+  <div id="log-container">
+    <div class="empty-state" id="log-loading">
+      <span class="spinner"></span> Loading records…
+    </div>
+  </div>
+</main>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <button class="modal-close" id="modal-close">✕</button>
+    <div class="form-title" style="margin-bottom:24px">Edit Dive</div>
+    <div class="form-grid" id="edit-form">
+      <!-- same fields, rendered by JS -->
+    </div>
+    <div class="form-footer">
+      <span id="edit-msg"></span>
+      <button class="btn-submit" id="btn-update">Update</button>
+    </div>
+  </div>
 </div>
 
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ─────────────────────────────────── JS ─────────────────────────────────── -->
 <script>
-  const SUPABASE_URL = 'https://jqbtjklxbfydmwwztbvn.supabase.co'
-  const SUPABASE_KEY = 'sb_publishable_KT7j111OChA9tnNq2gqkAQ_Vp7TfGkG'
-  const { createClient } = supabase
-  const db = createClient(SUPABASE_URL, SUPABASE_KEY)
+// ── SUPABASE INIT ──────────────────────────────────────────────────────────
+const SUPA_URL = 'https://jqbtjklxbfydmwwztbvn.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxYnRqa2x4YmZ5ZG13d3p0YnZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNDgxMTAsImV4cCI6MjA2MTcyNDExMH0.k2lOh0YxHFiFP0D0TmLaMOqVR2rNkZy5t0GQXQ7VLzM';
+const { createClient } = supabase;
+const sb = createClient(SUPA_URL, SUPA_KEY);
 
-  async function init() {
-    const { data: { session } } = await db.auth.getSession()
-    if (!session) return window.location.href = 'index.html'
-    document.getElementById('userEmail').textContent = session.user.email
+// ── STATE ──────────────────────────────────────────────────────────────────
+let currentUser = null;
+let allDives    = [];
+let editingId   = null;
+let lastDive    = null;
+let unitSystem  = 'metric'; // 'metric' | 'imperial'
+let dropdownData = {
+  divers:  [],
+  job:     [],
+  client:  [],
+  vessel:  [],
+  country: [],
+};
+
+// ── UNIT CONVERSION ────────────────────────────────────────────────────────
+const M_TO_FT = 3.28084;
+const FT_TO_M = 1 / M_TO_FT;
+
+// All depths are stored in the DB as METERS.
+// When unit=imperial: input/display in ft, convert to m before saving.
+function toDisplay(meters) {
+  if (meters == null) return null;
+  return unitSystem === 'imperial'
+    ? Math.round(meters * M_TO_FT)
+    : meters;
+}
+function toMeters(value) {
+  if (value == null || value === '') return null;
+  const n = parseFloat(value);
+  if (isNaN(n)) return null;
+  return unitSystem === 'imperial' ? Math.round(n * FT_TO_M * 10) / 10 : n;
+}
+function unitLabel()     { return unitSystem === 'imperial' ? 'ft' : 'm'; }
+function altUnitLabel()  { return unitSystem === 'imperial' ? 'm'  : 'ft'; }
+function toAlt(meters) {
+  if (meters == null) return null;
+  return unitSystem === 'imperial' ? meters : Math.round(meters * M_TO_FT);
+}
+
+// Combo fields config
+const COMBO_FIELDS = [
+  { id: 'combo-divers',  key: 'divers',  placeholder: 'Search or add diver…', field: 'f-divers'  },
+  { id: 'combo-job',     key: 'job',     placeholder: 'Search or add job…',   field: 'f-job'     },
+  { id: 'combo-client',  key: 'client',  placeholder: 'Search or add client…',field: 'f-client'  },
+  { id: 'combo-vessel',  key: 'vessel',  placeholder: 'Search or add vessel…',field: 'f-vessel'  },
+  { id: 'combo-country', key: 'country', placeholder: 'Search or add country…',field:'f-country' },
+];
+
+// ── TOAST ──────────────────────────────────────────────────────────────────
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.className = 'toast', 2800);
+}
+
+// ── AUTH GUARD ─────────────────────────────────────────────────────────────
+async function initAuth() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'index.html'; return; }
+  currentUser = session.user;
+  document.getElementById('user-email').textContent = currentUser.email;
+  await loadUnitPreference();
+  applyUnitUI();
+  await loadDropdowns();
+  renderAllCombos();
+  await loadDives();
+  setTodayDate();
+  bindDepthHint();
+}
+
+document.getElementById('btn-signout').addEventListener('click', async () => {
+  await sb.auth.signOut();
+  window.location.href = 'index.html';
+});
+
+// ── UNIT PREFERENCE ────────────────────────────────────────────────────────
+async function loadUnitPreference() {
+  const { data } = await sb
+    .from('profiles')
+    .select('unit_system')
+    .eq('id', currentUser.id)
+    .single();
+  if (data?.unit_system) unitSystem = data.unit_system;
+}
+
+async function saveUnitPreference(unit) {
+  unitSystem = unit;
+  await sb.from('profiles')
+    .update({ unit_system: unit })
+    .eq('id', currentUser.id);
+}
+
+function applyUnitUI() {
+  document.getElementById('btn-metric').classList.toggle('active',   unitSystem === 'metric');
+  document.getElementById('btn-imperial').classList.toggle('active', unitSystem === 'imperial');
+  // update depth label
+  const lbl = document.getElementById('f-depth-label');
+  if (lbl) lbl.textContent = `Depth (${unitLabel()})`;
+  // update edit modal label if open
+  const elbl = document.getElementById('e-depth-label');
+  if (elbl) elbl.textContent = `Depth (${unitLabel()})`;
+  // re-render log if dives loaded
+  if (allDives.length > 0) renderLog();
+}
+
+function bindDepthHint() {
+  const inp  = document.getElementById('f-depth');
+  const hint = document.getElementById('f-depth-hint');
+  if (!inp || !hint) return;
+  inp.addEventListener('input', () => {
+    const v = parseFloat(inp.value);
+    if (!inp.value || isNaN(v)) { hint.textContent = ''; hint.className = 'depth-hint'; return; }
+    const alt = unitSystem === 'imperial'
+      ? `≈ ${Math.round(v * FT_TO_M * 10) / 10} m`
+      : `≈ ${Math.round(v * M_TO_FT)} ft`;
+    hint.textContent = alt;
+    hint.className = 'depth-hint active';
+  });
+}
+
+// Toggle buttons
+document.getElementById('btn-metric').addEventListener('click', async () => {
+  if (unitSystem === 'metric') return;
+  await saveUnitPreference('metric');
+  applyUnitUI();
+  bindDepthHint();
+  showToast('Switched to Metric (m)');
+});
+document.getElementById('btn-imperial').addEventListener('click', async () => {
+  if (unitSystem === 'imperial') return;
+  await saveUnitPreference('imperial');
+  applyUnitUI();
+  bindDepthHint();
+  showToast('Switched to Imperial (ft)');
+});
+
+// ── DROPDOWNS (from Supabase) ─────────────────────────────────────────────
+async function loadDropdowns() {
+  const { data, error } = await sb
+    .from('dropdown_options')
+    .select('*')
+    .eq('user_id', currentUser.id);
+  if (error) { console.error(error); return; }
+  dropdownData = { divers:[], job:[], client:[], vessel:[], country:[] };
+  (data || []).forEach(row => {
+    if (dropdownData[row.field_name] !== undefined)
+      dropdownData[row.field_name].push(row.value);
+  });
+}
+
+async function saveDropdownValue(key, value) {
+  if (!value.trim()) return;
+  if (dropdownData[key].includes(value)) return;
+  dropdownData[key].push(value);
+  await sb.from('dropdown_options').insert({
+    user_id: currentUser.id,
+    field_name: key,
+    value: value.trim(),
+  });
+}
+
+// ── COMBO COMPONENT ────────────────────────────────────────────────────────
+function renderAllCombos(containerId='dive-form') {
+  COMBO_FIELDS.forEach(cf => {
+    const wrap = document.getElementById(cf.id);
+    if (wrap) renderCombo(wrap, cf.key, cf.placeholder, cf.field);
+  });
+}
+
+function renderCombo(container, key, placeholder, inputId) {
+  container.innerHTML = `
+    <div class="combo-input-row">
+      <input type="text" class="combo-input" id="${inputId}" placeholder="${placeholder}" autocomplete="off">
+      <button type="button" class="combo-arrow" tabindex="-1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+    </div>
+    <div class="combo-dropdown" id="${inputId}-dd"></div>
+  `;
+
+  const inp = container.querySelector(`#${inputId}`);
+  const dd  = container.querySelector(`#${inputId}-dd`);
+  const arr = container.querySelector('.combo-arrow');
+
+  function openDD(filter='') {
+    const opts = dropdownData[key].filter(v =>
+      v.toLowerCase().includes(filter.toLowerCase())
+    );
+    dd.innerHTML = '';
+    opts.forEach(v => {
+      const el = document.createElement('div');
+      el.className = 'combo-option';
+      el.textContent = v;
+      el.addEventListener('mousedown', e => {
+        e.preventDefault();
+        inp.value = v; dd.classList.remove('open');
+      });
+      dd.appendChild(el);
+    });
+    // "Add new" option
+    if (filter.trim() && !dropdownData[key].includes(filter.trim())) {
+      const add = document.createElement('div');
+      add.className = 'combo-option add-new';
+      add.textContent = `Add "${filter.trim()}"`;
+      add.addEventListener('mousedown', async e => {
+        e.preventDefault();
+        await saveDropdownValue(key, filter.trim());
+        inp.value = filter.trim();
+        dd.classList.remove('open');
+      });
+      dd.appendChild(add);
+    }
+    dd.classList.toggle('open', dd.children.length > 0);
   }
 
-  async function logout() {
-    await db.auth.signOut()
-    window.location.href = 'index.html'
+  inp.addEventListener('focus', () => openDD(inp.value));
+  inp.addEventListener('input', () => openDD(inp.value));
+  inp.addEventListener('blur',  () => setTimeout(() => dd.classList.remove('open'), 200));
+  arr.addEventListener('mousedown', e => {
+    e.preventDefault();
+    if (dd.classList.contains('open')) { dd.classList.remove('open'); return; }
+    openDD(inp.value);
+    inp.focus();
+  });
+}
+
+// ── SET TODAY ──────────────────────────────────────────────────────────────
+function setTodayDate() {
+  const d = document.getElementById('f-date');
+  if (d && !d.value) {
+    const today = new Date().toISOString().split('T')[0];
+    d.value = today;
+  }
+}
+
+// ── FORM READ/WRITE ────────────────────────────────────────────────────────
+function readForm(prefix='f') {
+  const rawDepth = document.getElementById(`${prefix}-depth`)?.value;
+  return {
+    date:      document.getElementById(`${prefix}-date`)?.value     || '',
+    dive_type: document.getElementById(`${prefix}-type`)?.value     || '',
+    depth:     toMeters(rawDepth),   // always stored as meters
+    depth_unit: unitSystem,          // record which unit was used to enter
+    divers:    document.getElementById(`${prefix}-divers`)?.value   || '',
+    deco:      document.getElementById(`${prefix}-deco`)?.value     || '',
+    tdt:       document.getElementById(`${prefix}-tdt`)?.value      || '',
+    job:       document.getElementById(`${prefix}-job`)?.value      || '',
+    client:    document.getElementById(`${prefix}-client`)?.value   || '',
+    vessel:    document.getElementById(`${prefix}-vessel`)?.value   || '',
+    location:  document.getElementById(`${prefix}-location`)?.value || '',
+    country:   document.getElementById(`${prefix}-country`)?.value  || '',
+    notes:     document.getElementById(`${prefix}-notes`)?.value    || '',
+  };
+}
+
+function fillForm(data, prefix='f') {
+  const set = (id, v) => {
+    const el = document.getElementById(`${prefix}-${id}`);
+    if (el) el.value = v ?? '';
+  };
+  set('date',     data.date);
+  set('type',     data.dive_type);
+  // depth stored as meters → convert for display
+  set('depth',    data.depth != null ? toDisplay(data.depth) : '');
+  set('divers',   data.divers);
+  set('deco',     data.deco);
+  set('tdt',      data.tdt);
+  set('job',      data.job);
+  set('client',   data.client);
+  set('vessel',   data.vessel);
+  set('location', data.location);
+  set('country',  data.country);
+  set('notes',    data.notes);
+}
+
+function clearForm() {
+  ['date','type','depth','divers','deco','tdt','job','client','vessel','location','country','notes']
+    .forEach(id => {
+      const el = document.getElementById(`f-${id}`);
+      if (el) el.value = id === 'type' ? '' : '';
+    });
+  setTodayDate();
+}
+
+// ── SAVE DIVE ──────────────────────────────────────────────────────────────
+document.getElementById('btn-save').addEventListener('click', async () => {
+  const payload = readForm('f');
+  if (!payload.date) { showMsg('form-msg', 'Date is required.', true); return; }
+
+  const btn = document.getElementById('btn-save');
+  const lbl = document.getElementById('btn-save-label');
+  btn.disabled = true;
+  lbl.innerHTML = '<span class="spinner"></span>Saving…';
+
+  // save new dropdown values
+  await saveDropdownValue('divers',  payload.divers);
+  await saveDropdownValue('job',     payload.job);
+  await saveDropdownValue('client',  payload.client);
+  await saveDropdownValue('vessel',  payload.vessel);
+  await saveDropdownValue('country', payload.country);
+
+  const { data, error } = await sb.from('dives').insert({
+    user_id: currentUser.id, ...payload
+  }).select().single();
+
+  btn.disabled = false; lbl.textContent = 'Save Dive';
+
+  if (error) { showMsg('form-msg', error.message, true); return; }
+
+  lastDive = { ...payload };
+  allDives.unshift(data);
+  renderLog();
+  clearForm();
+  showToast('Dive saved ✓');
+  showMsg('form-msg', 'Dive saved successfully!', false);
+  setTimeout(() => hideMsg('form-msg'), 3000);
+});
+
+function showMsg(id, text, isError) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = isError ? 'error visible' : 'visible';
+}
+function hideMsg(id) {
+  document.getElementById(id).className = '';
+}
+
+// ── REPEAT LAST DIVE ───────────────────────────────────────────────────────
+document.getElementById('btn-repeat').addEventListener('click', () => {
+  if (!lastDive) {
+    // try from list
+    if (allDives.length === 0) { showToast('No dives yet.', 'error'); return; }
+    lastDive = allDives[0];
+  }
+  const copy = { ...lastDive };
+  copy.date = new Date().toISOString().split('T')[0];
+  fillForm(copy, 'f');
+  showToast('Last dive loaded — review & save');
+});
+
+// ── LOAD DIVES ─────────────────────────────────────────────────────────────
+async function loadDives() {
+  document.getElementById('log-container').innerHTML =
+    '<div class="empty-state" id="log-loading"><span class="spinner"></span> Loading records…</div>';
+
+  const { data, error } = await sb
+    .from('dives')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .order('date', { ascending: false });
+
+  if (error) { console.error(error); return; }
+  allDives = data || [];
+  if (allDives.length > 0) lastDive = allDives[0];
+  renderLog();
+}
+
+// ── RENDER LOG (accordion by month) ───────────────────────────────────────
+function renderLog() {
+  const container = document.getElementById('log-container');
+  document.getElementById('dive-count').textContent =
+    `${allDives.length} dive${allDives.length !== 1 ? 's' : ''} total`;
+
+  if (allDives.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+        </svg>
+        <p>No dives logged yet. Use the form above to add your first entry.</p>
+      </div>`;
+    return;
   }
 
-  init()
+  // group by year-month
+  const groups = {};
+  allDives.forEach(d => {
+    const key = d.date ? d.date.slice(0, 7) : 'unknown';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(d);
+  });
+
+  const monthNames = ['January','February','March','April','May','June',
+                      'July','August','September','October','November','December'];
+
+  container.innerHTML = '';
+  let firstOpen = true;
+
+  Object.keys(groups).sort((a,b) => b.localeCompare(a)).forEach(ym => {
+    const dives = groups[ym];
+    const [yr, mo] = ym.split('-');
+    const label = `${monthNames[parseInt(mo)-1]} ${yr}`;
+    const isOpen = firstOpen;
+    firstOpen = false;
+
+    const maxD = Math.max(...dives.map(d => d.depth || 0));
+    const types = [...new Set(dives.map(d => d.dive_type).filter(Boolean))].join(', ');
+
+    const maxDDisplay = maxD ? `↓ ${toDisplay(maxD)}${unitLabel()} / ${toAlt(maxD)}${altUnitLabel()} max` : '';
+
+    const group = document.createElement('div');
+    group.className = 'month-group';
+    group.innerHTML = `
+      <div class="month-header ${isOpen ? 'open' : ''}" data-ym="${ym}">
+        <span class="month-label">${label}</span>
+        <span class="month-meta">
+          <span>${dives.length} dive${dives.length !== 1 ? 's' : ''}</span>
+          ${maxDDisplay ? `<span>${maxDDisplay}</span>` : ''}
+          ${types ? `<span style="color:var(--sub)">${types}</span>` : ''}
+        </span>
+        <svg class="month-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div class="month-body ${isOpen ? 'open' : ''}" id="mb-${ym}">
+        <div class="dive-row header-row">
+          <span class="col-label">Date</span>
+          <span class="col-label">Type</span>
+          <span class="col-label">Job</span>
+          <span class="col-label">Location</span>
+          <span class="col-label">Depth</span>
+          <span class="col-label"></span>
+        </div>
+        ${dives.map(d => renderDiveRow(d)).join('')}
+      </div>
+    `;
+
+    // accordion toggle
+    group.querySelector('.month-header').addEventListener('click', () => {
+      const h = group.querySelector('.month-header');
+      const b = group.querySelector('.month-body');
+      h.classList.toggle('open');
+      b.classList.toggle('open');
+    });
+
+    container.appendChild(group);
+  });
+
+  // attach edit/delete handlers
+  container.querySelectorAll('.btn-edit').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      openEditModal(btn.dataset.id);
+    });
+  });
+  container.querySelectorAll('.btn-del').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      deleteDive(btn.dataset.id);
+    });
+  });
+}
+
+function renderDiveRow(d) {
+  const typeClass = d.dive_type === 'Bell/Sat' ? 'type-bell' : 'type-surface';
+  const typeLbl   = d.dive_type || '—';
+  const dateStr   = d.date ? formatDate(d.date) : '—';
+
+  // depth: primary in active unit, secondary in other unit
+  let depthHtml = '<span class="dive-depth-primary">—</span>';
+  if (d.depth != null) {
+    const primary = toDisplay(d.depth);
+    const alt     = toAlt(d.depth);
+    depthHtml = `
+      <div class="dive-depth-both">
+        <span class="dive-depth-primary">${primary} ${unitLabel()}</span>
+        <span class="dive-depth-secondary">${alt} ${altUnitLabel()}</span>
+      </div>`;
+  }
+
+  return `
+    <div class="dive-row">
+      <span class="dive-date">${dateStr}</span>
+      <span><span class="dive-type ${typeClass}">${typeLbl}</span></span>
+      <span class="dive-job">${d.job || '—'}</span>
+      <span class="dive-location">${d.location || d.country || '—'}</span>
+      <span>${depthHtml}</span>
+      <span class="dive-actions">
+        <button class="btn-icon edit btn-edit" data-id="${d.id}" title="Edit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </button>
+        <button class="btn-icon del btn-del" data-id="${d.id}" title="Delete">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6"/>
+            <path d="M9 6V4h6v2"/>
+          </svg>
+        </button>
+      </span>
+    </div>`;
+}
+
+function formatDate(iso) {
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+// ── DELETE ─────────────────────────────────────────────────────────────────
+async function deleteDive(id) {
+  if (!confirm('Delete this dive record?')) return;
+  const { error } = await sb.from('dives').delete().eq('id', id);
+  if (error) { showToast(error.message, 'error'); return; }
+  allDives = allDives.filter(d => d.id != id);
+  renderLog();
+  showToast('Dive deleted');
+}
+
+// ── EDIT MODAL ─────────────────────────────────────────────────────────────
+function openEditModal(id) {
+  const dive = allDives.find(d => d.id == id);
+  if (!dive) return;
+  editingId = id;
+
+  const ef = document.getElementById('edit-form');
+  ef.innerHTML = `
+    <div class="field">
+      <label>Date</label>
+      <input type="date" id="e-date" value="${dive.date || ''}">
+    </div>
+    <div class="field">
+      <label>Dive Type</label>
+      <select id="e-type">
+        <option value="">— select —</option>
+        <option value="Bell/Sat" ${dive.dive_type==='Bell/Sat'?'selected':''}>Bell / Sat</option>
+        <option value="Surface Supply" ${dive.dive_type==='Surface Supply'?'selected':''}>Surface Supply</option>
+      </select>
+    </div>
+    <div class="field">
+      <label id="e-depth-label">Depth (${unitLabel()})</label>
+      <input type="number" id="e-depth" value="${dive.depth != null ? toDisplay(dive.depth) : ''}">
+      <div class="depth-hint ${dive.depth != null ? 'active' : ''}" id="e-depth-hint">
+        ${dive.depth != null ? `≈ ${toAlt(dive.depth)} ${altUnitLabel()}` : ''}
+      </div>
+    </div>
+    <div class="field field-span2">
+      <label>Divers</label>
+      <div class="combo-wrap" id="edit-combo-divers"></div>
+    </div>
+    <div class="field">
+      <label>Storage / Table Deco</label>
+      <input type="text" id="e-deco" value="${dive.deco || ''}">
+    </div>
+    <div class="field">
+      <label>Excursion / TDT</label>
+      <input type="text" id="e-tdt" value="${dive.tdt || ''}">
+    </div>
+    <div class="field">
+      <label>Job</label>
+      <div class="combo-wrap" id="edit-combo-job"></div>
+    </div>
+    <div class="field">
+      <label>Client</label>
+      <div class="combo-wrap" id="edit-combo-client"></div>
+    </div>
+    <div class="field">
+      <label>Vessel</label>
+      <div class="combo-wrap" id="edit-combo-vessel"></div>
+    </div>
+    <div class="field">
+      <label>Location</label>
+      <input type="text" id="e-location" value="${dive.location || ''}">
+    </div>
+    <div class="field">
+      <label>Country</label>
+      <div class="combo-wrap" id="edit-combo-country"></div>
+    </div>
+    <div class="field field-span3">
+      <label>Notes</label>
+      <textarea id="e-notes">${dive.notes || ''}</textarea>
+    </div>
+  `;
+
+  // render combos for edit modal
+  const editCombos = [
+    { id:'edit-combo-divers',  key:'divers',  placeholder:'Divers…',  field:'e-divers'  },
+    { id:'edit-combo-job',     key:'job',     placeholder:'Job…',     field:'e-job'     },
+    { id:'edit-combo-client',  key:'client',  placeholder:'Client…',  field:'e-client'  },
+    { id:'edit-combo-vessel',  key:'vessel',  placeholder:'Vessel…',  field:'e-vessel'  },
+    { id:'edit-combo-country', key:'country', placeholder:'Country…', field:'e-country' },
+  ];
+  editCombos.forEach(cf => {
+    const wrap = document.getElementById(cf.id);
+    if (wrap) renderCombo(wrap, cf.key, cf.placeholder, cf.field);
+  });
+  // pre-fill combo inputs
+  setTimeout(() => {
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+    set('e-divers',  dive.divers);
+    set('e-job',     dive.job);
+    set('e-client',  dive.client);
+    set('e-vessel',  dive.vessel);
+    set('e-country', dive.country);
+
+    // bind depth hint for edit modal
+    const einp  = document.getElementById('e-depth');
+    const ehint = document.getElementById('e-depth-hint');
+    if (einp && ehint) {
+      einp.addEventListener('input', () => {
+        const v = parseFloat(einp.value);
+        if (!einp.value || isNaN(v)) { ehint.textContent = ''; ehint.className = 'depth-hint'; return; }
+        const alt = unitSystem === 'imperial'
+          ? `≈ ${Math.round(v * FT_TO_M * 10) / 10} m`
+          : `≈ ${Math.round(v * M_TO_FT)} ft`;
+        ehint.textContent = alt;
+        ehint.className = 'depth-hint active';
+      });
+    }
+  }, 50);
+
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+document.getElementById('modal-close').addEventListener('click', closeEditModal);
+document.getElementById('edit-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeEditModal();
+});
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.remove('open');
+  editingId = null;
+}
+
+document.getElementById('btn-update').addEventListener('click', async () => {
+  if (!editingId) return;
+  const payload = readForm('e');
+
+  await saveDropdownValue('divers',  payload.divers);
+  await saveDropdownValue('job',     payload.job);
+  await saveDropdownValue('client',  payload.client);
+  await saveDropdownValue('vessel',  payload.vessel);
+  await saveDropdownValue('country', payload.country);
+
+  const btn = document.getElementById('btn-update');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Updating…';
+
+  const { data, error } = await sb.from('dives')
+    .update(payload).eq('id', editingId).select().single();
+
+  btn.disabled = false; btn.textContent = 'Update';
+
+  if (error) { showMsg('edit-msg', error.message, true); return; }
+
+  allDives = allDives.map(d => d.id == editingId ? data : d);
+  renderLog();
+  closeEditModal();
+  showToast('Dive updated ✓');
+});
+
+// ── BOOT ───────────────────────────────────────────────────────────────────
+initAuth();
 </script>
 </body>
 </html>
