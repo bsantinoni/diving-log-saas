@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diving Log — Login</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, sans-serif;
+      background: #0a1628;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      background: #112240;
+      padding: 40px;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+      color: #64ffda;
+    }
+    p {
+      color: #8892b0;
+      margin-bottom: 32px;
+      font-size: 14px;
+    }
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      background: #0a1628;
+      border: 1px solid #1e3a5f;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 15px;
+      margin-bottom: 16px;
+      outline: none;
+    }
+    input:focus { border-color: #64ffda; }
+    button {
+      width: 100%;
+      padding: 13px;
+      background: #64ffda;
+      color: #0a1628;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+    button:hover { background: #4cd9b8; }
+    .btn-secondary {
+      background: transparent;
+      color: #64ffda;
+      border: 1px solid #64ffda;
+      font-weight: 500;
+    }
+    .btn-secondary:hover { background: rgba(100,255,218,0.1); }
+    .msg {
+      text-align: center;
+      font-size: 13px;
+      margin-top: 8px;
+      min-height: 20px;
+      color: #ff6b6b;
+    }
+    .msg.success { color: #64ffda; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>🤿 Diving Log</h1>
+  <p>Commercial diving supervision logbook</p>
+
+  <input type="email" id="email" placeholder="Email" />
+  <input type="password" id="password" placeholder="Password" />
+
+  <button onclick="login()">Sign In</button>
+  <button class="btn-secondary" onclick="signup()">Create Account</button>
+
+  <div class="msg" id="msg"></div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'supabase.com/dashboard/project/jqbtjklxbfydmwwztbvn/sql/d38eb656-77aa-45e3-af65-2ddb0cee690c'
+  const SUPABASE_KEY = 'sb_secret_AqHLxEhCEbRBBtaSBe9ARQ_r7Wtz7TF'
+  const { createClient } = supabase
+  const db = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+  function msg(text, success = false) {
+    const el = document.getElementById('msg')
+    el.textContent = text
+    el.className = 'msg' + (success ? ' success' : '')
+  }
+
+  async function login() {
+    const email = document.getElementById('email').value
+    const password = document.getElementById('password').value
+    const { error } = await db.auth.signInWithPassword({ email, password })
+    if (error) return msg(error.message)
+    msg('Redirecting...', true)
+    setTimeout(() => window.location.href = 'app.html', 800)
+  }
+
+  async function signup() {
+    const email = document.getElementById('email').value
+    const password = document.getElementById('password').value
+    const { error } = await db.auth.signUp({ email, password })
+    if (error) return msg(error.message)
+    msg('Account created! Check your email to confirm.', true)
+  }
+</script>
+</body>
+</html>
