@@ -78,6 +78,12 @@ header::before{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
 .btn-out{background:none;border:1px solid var(--bd);color:var(--mu);font-size:10px;
   font-weight:600;padding:5px 10px;border-radius:20px;cursor:pointer;transition:all .15s;}
 .btn-out:hover{border-color:var(--red);color:var(--red);}
+.btn-admin{display:none;background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.3);
+  color:#E74C3C;font-size:10px;font-weight:700;padding:5px 10px;border-radius:20px;
+  cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;
+  align-items:center;gap:4px;letter-spacing:.04em;}
+.btn-admin.visible{display:flex;}
+.btn-admin:hover{background:rgba(231,76,60,.18);border-color:var(--red);}
 .btn-install{display:none;background:rgba(244,166,54,.1);border:1px solid var(--goldD);
   color:var(--gold);font-size:10px;font-weight:600;padding:5px 10px;border-radius:20px;
   cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;
@@ -377,6 +383,12 @@ textarea{resize:vertical;min-height:70px;}
           <path d="M12 2v13M7 10l5 6 5-6"/><path d="M3 19h18"/>
         </svg>
         Install
+      </button>
+      <button class="btn-admin" id="btn-admin" onclick="window.location.href=APP_ROOT+'admin.html'" title="Admin Panel">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        Admin
       </button>
       <button class="btn-out" id="btn-out">Sign out</button>
     </div>
@@ -858,6 +870,11 @@ async function boot(){
   if(!session){window.location.href=APP_ROOT+'index.html';return;}
   user=session.user;
   document.getElementById('sync-txt').textContent=user.email.split('@')[0].slice(0,12);
+  // show admin button only for admin email
+  const ADMIN_EMAIL='bsantinoni@gmail.com';
+  if(user.email===ADMIN_EMAIL){
+    document.getElementById('btn-admin').classList.add('visible');
+  }
   const{data:prof}=await sb.from('profiles').select('unit_system').eq('id',user.id).single();
   if(prof?.unit_system){
     unitSys=prof.unit_system;
